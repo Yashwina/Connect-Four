@@ -1,0 +1,847 @@
+unit Unit1;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, strutils, system.UITypes;
+
+type
+  TGameForm = class(TForm)
+    lbl_computer: TLabel;
+    lbl_you: TLabel;
+    btn_exit: TButton;
+    btn_help: TButton;
+    lbl_moveerror: TLabel;
+    procedure FormCreate(Sender: TObject);
+    procedure buttonclick(Sender:TObject);
+    procedure btn_helpClick(Sender: TObject);
+    procedure btn_exitClick(Sender: TObject);
+
+
+
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+   TMoves = record
+    xcoord : string[1];
+    ycoord : string[1];
+    score : string[100];
+  end;
+
+var
+  GameForm: TGameForm;
+  board : array[0..5,0..6] of TLabel;
+  turns:integer;
+  Arrows : array[0..6] of Tbutton;
+  movescores : array [0..41] of Tmoves;
+  movesmadex: array [0..20] of integer;
+  movesmadey: array [0..20] of integer;
+  movesmadescore: array [0..20] of integer;
+  Storefile:textfile;
+  bestscore : integer;
+  bestx : integer;
+  besty : integer;
+  compwin:integer;
+  totalgames:integer;
+  playerwin:integer;
+  page: boolean;
+  pwin:integer;
+  cwin:integer;
+  w:boolean;
+  l:boolean;
+  negative:boolean;
+  compturns:integer;
+  main:boolean;
+
+implementation
+
+{$R *.dfm}
+
+Uses unit2,unit3,unit4,unit5,unit6;
+
+procedure saveupdatedrecord(k:integer);
+var
+  i,j,v,m:integer;
+begin
+    //change scores in record if move made matches
+    for i:= 1 to 41 do
+     begin
+     for j := 1 to 20 do
+       begin
+        if (movescores[i].xcoord = inttostr(movesmadex[j])) and (movescores[i].ycoord = inttostr(movesmadey[j]))then
+            begin
+                movescores[i].score := inttostr((movesmadescore[j]) + k)
+
+            end;
+       end;
+     end;
+
+     //rewrite updated score data
+     Rewrite(storefile);
+     for v:= 0 to 41 do
+     begin
+     writeln(storefile,movescores[v].xcoord);
+     writeln(storefile,movescores[v].ycoord);
+     writeln(storefile,movescores[v].score);
+     end;
+
+     closefile(storefile);
+     //change bestscore value
+     for m:= 0 to 41 do
+       begin
+         if strtoint(movescores[m].score)>bestscore then
+            bestscore:=strtoint(movescores[m].score);
+       end;
+
+end;
+
+Procedure Draw;
+begin
+   if turns = 42
+      then drawform.show;
+end;
+
+Procedure Win;
+begin
+   w:=true;
+   winform.show;
+end;
+
+Procedure Lose;
+begin
+   l:=true;
+   loseform.show;
+end;
+
+Procedure Outcome;
+Var i,j: integer;
+
+Begin
+negative:=false;
+page:=false;;
+For i:= 0 to 5 do
+  begin
+  For j:= 0 to 6 do
+  Begin
+   //check computer
+   With board[I,j] do
+   Begin
+   //Check Vertical
+    If i<=2 then
+       begin
+       If ((board[i,j].font.color=clRed) and
+          (board[i+1,j].font.color=clRed)and
+          (board[i+2,j].font.color=clRed)and
+          (board[i+3,j].font.color=clRed))
+          Then begin
+               page:=true;
+               saveupdatedrecord(10);
+               lose;
+               exit;
+               end;
+       end
+       else if
+          ((board[i,j].font.color=clRed) and
+          (board[i-1,j].font.color=clRed)and
+          (board[i-2,j].font.color=clRed)and
+          (board[i-3,j].font.color=clRed)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(10);
+               lose;
+               exit;
+               end;
+       //Check Horizontal
+     If j>=3 then
+      begin
+       If ((board[i,j].font.color=clRed) and
+          (board[i,j-1].font.color=clRed)and
+          (board[i,j-2].font.color=clRed)and
+          (board[i,j-3].font.color=clRed)and (page=false))
+         Then begin
+              page:=true;
+              saveupdatedrecord(10);
+              lose;
+              exit;
+              end;
+      end
+     else if
+          ((board[i,j].font.color=clRed) and
+          (board[i,j+1].font.color=clRed)and
+          (board[i,j+2].font.color=clRed)and
+          (board[i,j+3].font.color=clRed)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(10);
+               lose;
+               exit;
+               end;
+     //Diagonals
+     if (i<=2) and (j<=3) then
+       begin
+         If ((board[i,j].font.color=clRed) and
+          (board[i+1,j+1].font.color=clRed)and
+          (board[i+2,j+2].font.color=clRed)and
+          (board[i+3,j+3].font.color=clRed)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(10);
+               lose;
+               exit;
+               end;
+       end;
+     if (i>=3) and (j<=3) then
+       begin
+          If ((board[i,j].font.color=clRed) and
+          (board[i-1,j+1].font.color=clRed)and
+          (board[i-2,j+2].font.color=clRed)and
+          (board[i-3,j+3].font.color=clRed)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(10);
+               lose;
+               exit;
+               end;
+       end;
+   end;
+  end;
+ end;
+
+ begin
+ //check player
+ For i:= 0 to 5 do
+  For j:= 0 to 6 do
+  Begin
+   With board[I,j] do
+   Begin
+   //Check Vertical
+    If i<=2 then
+       begin
+       If ((board[i,j].font.color=clYellow) and
+          (board[i+1,j].font.color=clYellow)and
+          (board[i+2,j].font.color=clYellow)and
+          (board[i+3,j].font.color=clYellow))
+          Then begin
+               page:=true;
+               saveupdatedrecord(-10);
+               win;
+               break;
+               end;
+       end
+       else if
+          ((board[i,j].font.color=clYellow) and
+          (board[i-1,j].font.color=clYellow)and
+          (board[i-2,j].font.color=clYellow)and
+          (board[i-3,j].font.color=clYellow)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(-10);
+               win;
+               break;
+               end;
+       //Check Horizontal
+     If j>=3 then
+      begin
+       If ((board[i,j].font.color=clYellow) and
+          (board[i,j-1].font.color=clYellow)and
+          (board[i,j-2].font.color=clYellow)and
+          (board[i,j-3].font.color=clYellow)and (page=false))
+         Then begin
+              page:=true;
+              saveupdatedrecord(-10);
+              win;
+              break;
+              end;
+      end
+     else if
+          ((board[i,j].font.color=clYellow) and
+          (board[i,j+1].font.color=clYellow)and
+          (board[i,j+2].font.color=clYellow)and
+          (board[i,j+3].font.color=clYellow)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(-10);
+               win;
+               break;
+               end;
+     //check diagonals
+     if (i<=2) and (j<=3) then
+       begin
+         If ((board[i,j].font.color=clYellow) and
+          (board[i+1,j+1].font.color=clYellow)and
+          (board[i+2,j+2].font.color=clYellow)and
+          (board[i+3,j+3].font.color=clYellow)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(-10);
+               win;
+               break;
+               end;
+       end;
+     if (i>=3) and (j<=3) then
+       begin
+          If ((board[i,j].font.color=clYellow) and
+          (board[i-1,j+1].font.color=clYellow)and
+          (board[i-2,j+2].font.color=clYellow)and
+          (board[i-3,j+3].font.color=clYellow)and (page=false))
+          Then begin
+               page:=true;
+               saveupdatedrecord(-10);
+               win;
+               break;
+               end;
+       end;
+   end;
+  end;
+ end;
+end;
+
+
+
+procedure saverecord;
+var
+  i:integer;
+  f,path: string;
+begin
+    //save file to store record
+    f := getcurrentdir;
+    path :=(leftstr(f,length(f)-11));
+    AssignFile(StoreFile, path+'storage.txt');
+    ReWrite(StoreFile);
+
+    for i:= 0 to 41 do
+    begin
+    writeln(storefile,movescores[i].xcoord);
+    writeln(storefile,movescores[i].ycoord);
+    writeln(storefile,movescores[i].score);
+    end;
+    closefile(storefile);
+
+end;
+
+Procedure setrecord;
+var i,j,y: integer;
+Begin
+  //initial values of record
+  for y:= 0 to 5 do
+    movescores[y].xcoord :=inttostr(0);
+  for y:= 6 to 11 do
+    movescores[y].xcoord :=inttostr(1);
+  for y:= 12 to 17 do
+    movescores[y].xcoord :=inttostr(2);
+  for y:= 18 to 23 do
+    movescores[y].xcoord :=inttostr(3);
+  for y:= 24 to 29 do
+    movescores[y].xcoord :=inttostr(4);
+  for y:= 30 to 35 do
+    movescores[y].xcoord :=inttostr(5);
+  for y:= 36 to 41 do
+    movescores[y].xcoord :=inttostr(6);
+  for y:= 0 to 41 do
+    begin
+     if (y mod 6 = 0) then
+      movescores[y].ycoord:=inttostr(0);
+     if (y mod 6 = 1) then
+      movescores[y].ycoord:=inttostr(1);
+     if (y mod 6 = 2) then
+      movescores[y].ycoord:=inttostr(2);
+     if (y mod 6 = 3) then
+      movescores[y].ycoord:=inttostr(3);
+     if (y mod 6 = 4) then
+      movescores[y].ycoord:=inttostr(4);
+     if (y mod 6 = 5) then
+      movescores[y].ycoord:=inttostr(5);
+    end;
+  for y:= 0 to 41 do
+    //all scores are zero at the beginning
+    movescores[y].score :=inttostr(0);
+ saverecord;
+End;
+
+Procedure MakeMatchMove(x,y:integer);
+var k: integer;
+begin
+for k:= 0 to 41 do
+
+  begin
+     if x<5 then
+        begin
+        if (board[x+1,y].Caption='O') then
+        begin
+         with board[x,y]do
+           begin
+           if caption='-'
+             then
+              begin
+              if turns mod 2 =1 then
+              begin
+              Caption:='O';
+              Font.Color:=clRed;
+              turns:=turns+1;
+              movesmadex[compturns]:=y;
+              movesmadey[compturns]:=x;
+              movesmadescore[compturns]:=strtoint(movescores[k].score);
+              compturns:=compturns+1;
+              end;
+              end;
+           end;
+         end;
+         end
+
+         //if at boundary of board
+         else if board[x,y].Caption<>'O'
+           then
+           begin
+         with board[x,y]do
+           begin
+           if caption='-'
+             then
+              begin
+              if turns mod 2 =1 then
+              begin
+              Caption:='O';
+              Font.Color:=clRed;
+              turns:=turns+1;
+              movesmadex[compturns]:=y;
+              movesmadey[compturns]:=x;
+              movesmadescore[compturns]:=strtoint(movescores[k].score);
+              compturns:=compturns+1;
+              end;
+              end;
+           end;
+         end;
+
+  end;
+end;
+
+Procedure MakeComputerMove;
+var i,j,k,x,y,p: integer;
+begin
+ if (page=false) and (turns mod 2 =1) then
+ begin
+
+    begin
+  //checking if match can be made for computer
+  For i:= 0 to 5 do
+  For j:= 0 to 6 do
+  Begin
+   With board[I,j] do
+   Begin
+    If i<=2 then
+       begin
+       If ((board[i,j].font.color=clRed) and
+          (board[i+1,j].font.color=clRed)and
+          (board[i+2,j].font.color=clRed) and
+          (board[i+3,j].caption='-'))
+          Then begin
+               x:=i+3;
+               y:=j;
+               MakeMatchMove(x,y);
+               break;
+               end;
+       end
+       else if
+          ((board[i,j].font.color=clRed) and
+          (board[i-1,j].font.color=clRed)and
+          (board[i-2,j].font.color=clRed)and
+          (board[i-3,j].caption='-'))
+          Then begin
+               x:=i-3;
+               y:=j;
+               MakeMatchMove(x,y);
+               break;
+               end;
+
+     If j>=3 then
+      begin
+       If ((board[i,j].font.color=clRed) and
+          (board[i,j-1].font.color=clRed)and
+          (board[i,j-2].font.color=clRed)and
+          (board[i,j-3].caption='-'))
+         Then begin
+              x:=i;
+              y:=j-3;
+              MakeMatchMove(x,y);
+              break;
+              end;
+      end
+     else if
+          ((board[i,j].font.color=clRed) and
+          (board[i,j+1].font.color=clRed)and
+          (board[i,j+2].font.color=clRed)and
+          (board[i,j+3].caption='-'))
+          Then begin
+               x:=i;
+               y:=j+3;
+               MakeMatchMove(x,y);
+               break;
+               end;
+     if (i<=2) and (j<=3) then
+       begin
+         If ((board[i,j].font.color=clRed) and
+          (board[i+1,j+1].font.color=clRed)and
+          (board[i+2,j+2].font.color=clRed)and
+          (board[i+3,j+3].caption='-'))
+          Then begin
+               x:=i+3;
+               y:=j+3;
+               MakeMatchMove(x,y);
+               break;
+               end;
+       end;
+     if (i>=3) and (j<=3) then
+       begin
+          If ((board[i,j].font.color=clRed) and
+          (board[i-1,j+1].font.color=clRed)and
+          (board[i-2,j+2].font.color=clRed)and
+          (board[i-3,j-3].caption='-'))
+          Then begin
+               x:=i-3;
+               y:=j+3;
+               MakeMatchMove(x,y);
+               break;
+               end;
+       end;
+
+
+       end;
+    end;
+  end;
+
+  begin
+  //checking if match of player can be blocked
+  For i:= 0 to 5 do
+  For j:= 0 to 6 do
+  Begin
+   With board[I,j] do
+   Begin
+    If i<=2 then
+       begin
+       If ((board[i,j].font.color=clYellow) and
+          (board[i+1,j].font.color=clYellow)and
+          (board[i+2,j].font.color=clYellow) and
+          (board[i+3,j].caption='-'))
+          Then begin
+               x:=i+3;
+               y:=j;
+               MakeMatchMove(x,y);
+               break;
+               end;
+       end
+       else if
+          ((board[i,j].font.color=clYellow) and
+          (board[i-1,j].font.color=clYellow)and
+          (board[i-2,j].font.color=clYellow)and
+          (board[i-3,j].caption='-'))
+          Then begin
+               x:=i-3;
+               y:=j;
+               MakeMatchMove(x,y);
+               break;
+               end;
+
+     If j>=3 then
+      begin
+       If ((board[i,j].font.color=clYellow) and
+          (board[i,j-1].font.color=clYellow)and
+          (board[i,j-2].font.color=clYellow)and
+          (board[i,j-3].caption='-'))
+         Then begin
+              x:=i;
+              y:=j-3;
+              MakeMatchMove(x,y);
+              break;
+              end;
+      end
+     else if
+          ((board[i,j].font.color=clYellow) and
+          (board[i,j+1].font.color=clYellow)and
+          (board[i,j+2].font.color=clYellow)and
+          (board[i,j+3].caption='-'))
+          Then begin
+               x:=i;
+               y:=j+3;
+               MakeMatchMove(x,y);
+               break;
+               end;
+     if (i<=2) and (j<=3) then
+       begin
+         If ((board[i,j].font.color=clYellow) and
+          (board[i+1,j+1].font.color=clYellow)and
+          (board[i+2,j+2].font.color=clYellow)and
+          (board[i+3,j+3].caption='-'))
+          Then begin
+               x:=i+3;
+               y:=j+3;
+               MakeMatchMove(x,y);
+               break;
+               end;
+       end;
+     if (i>=3) and (j<=3) then
+       begin
+          If ((board[i,j].font.color=clYellow) and
+          (board[i-1,j+1].font.color=clYellow)and
+          (board[i-2,j+2].font.color=clYellow)and
+          (board[i-3,j-3].caption='-'))
+          Then begin
+               x:=i-3;
+               y:=j+3;
+               MakeMatchMove(x,y);
+               break;
+               end;
+       end;
+
+
+       end;
+    end;
+  end;
+
+
+
+
+ if turns mod 2=1 then
+  begin
+  //making a move depending on bestscore
+ repeat
+ begin
+ for k:= 0 to 41 do
+  begin
+  if strtoint(movescores[k].score)>=bestscore
+   then begin
+        main:=true;
+        y:=strtoint(movescores[k].xcoord);
+        x:=strtoint(movescores[k].ycoord);
+        if x<5 then
+        begin
+        if (board[x+1,y].Caption='O') then
+        begin
+         //bestscore:=strtoint(movescores[k].score);
+         with board[x,y]do
+           begin
+           if caption='-'
+             then
+              begin
+              if turns mod 2 =1 then
+              begin
+              Caption:='O';
+              Font.Color:=clRed;
+              turns:=turns+1;
+              movesmadex[compturns]:=y;
+              movesmadey[compturns]:=x;
+              movesmadescore[compturns]:=strtoint(movescores[k].score);
+              compturns:=compturns+1;
+              //made:=true;
+              break;
+              end;
+              end;
+           end;
+         end;
+         end
+
+
+         else if board[x,y].Caption<>'O'
+           then
+           begin
+         //bestscore:=strtoint(movescores[k].score);
+         with board[x,y]do
+           begin
+           if caption='-'
+             then
+              begin
+              if turns mod 2 =1 then
+              begin
+              Caption:='O';
+              Font.Color:=clRed;
+              turns:=turns+1;
+              movesmadex[compturns]:=y;
+              movesmadey[compturns]:=x;
+              movesmadescore[compturns]:=strtoint(movescores[k].score);
+              compturns:=compturns+1;
+              //made:=true;
+              break;
+              end;
+              end;
+           end;
+         end;
+
+   end;
+  end;
+
+   //if move not possible, decrease bestscore value
+   if turns mod 2 =1 then
+   bestscore:= bestscore - 10;
+
+ end;
+ until turns mod 2 =0;
+  end;
+
+
+ if page=false then
+ begin
+ outcome;
+ end;
+ draw;
+
+ end;
+end;
+
+
+
+
+
+
+procedure TGameForm.btn_exitClick(Sender: TObject);
+var
+   buttonSelected : Integer;
+ begin
+   buttonSelected := messagedlg('Are you sure you want to quit the game?',mtError, mbOKCancel, 0);
+   if buttonSelected = mrOK
+   then begin
+        ShowMessage('Quit chosen');
+        homeform.Close;
+   end;
+   if buttonSelected = mrCancel then ShowMessage('Return to game?');
+ end;
+
+
+procedure TGameForm.btn_helpClick(Sender: TObject);
+begin
+gameform.Close;
+homeform.Show;
+end;
+
+
+
+procedure TGameForm.ButtonClick(Sender: TObject);
+var j,k : integer;
+begin
+ if turns mod 2 =0 then
+ begin
+
+ //arrow buttons
+ if (Sender as TButton).name = 'button1'  then
+   k:=0;
+ if (Sender as TButton).name = 'button2'  then
+   k:=1;
+ if (Sender as TButton).name = 'button3'  then
+   k:=2;
+ if (Sender as TButton).name = 'button4'  then
+   k:=3;
+ if (Sender as TButton).name = 'button5'  then
+   k:=4;
+ if (Sender as TButton).name = 'button6'  then
+   k:=5;
+ if (Sender as TButton).name = 'button7'  then
+   k:=6;
+
+ begin
+ if turns mod 2 = 0 then
+  begin
+   with board[0,k] do
+   begin
+     if caption = 'O' then
+       lbl_moveerror.Visible:=true;
+   end;
+
+   for j:= 5 downto 0 do
+         begin
+           with board[j,k] do
+             begin
+               if caption = '-' then
+                 begin
+                 lbl_moveerror.Visible:=false;
+                 board[j,k].Caption := 'O';
+                 board[j,k].font.color := clYellow;
+                 Turns:= turns+1;
+                 if page=false then
+                  begin
+                  outcome;
+                  end;
+                 //outcome;
+                 draw;
+
+                 Break;
+                 End;
+
+             end;
+         end;
+  end;
+ end;
+
+ if page=false then
+
+ MakeComputerMove;
+
+
+end;
+end;
+
+
+procedure TGameForm.FormCreate(Sender: TObject);
+var
+   i,j,k,x,y: integer;
+
+begin
+if totalgames>0 then
+  for x := 0 to 6 do
+    for y := 0 to 5 do
+      with board[x,y] do
+       caption:='-';
+
+turns:=0;
+main:=false;
+compturns:=0;
+if totalgames=0 then
+begin
+setrecord;
+//compwin:=0;
+//playerwin:=0;
+end;
+   //board spaces set up
+   for j:=0 to 6 do
+     for i:=0 to 5 do
+       begin
+          Board[i,j]:=TLabel.Create(Self);
+          With Board[i,j] do
+            begin
+              Left:=j*70+100;
+              Top:=i*50+100;
+              Visible:=true;
+              Parent:=self;
+              Caption:='-';
+		          Width:=50;
+		          Height:=50;
+              Font.Size:=30;
+              name := 'label'+inttostr((i*7)+j+1);
+            end;
+       end;
+
+  turns:=0;
+   for k:=0 to 6 do
+       begin
+          Arrows[k]:=TButton.Create(Self);
+          With Arrows[k] do
+            begin
+              Left:=k*70+90;
+              Top:=50;
+              Height:=50;
+              Width:=50;
+              Caption:='↓';
+              Visible:=true;
+              Font.Size:=25;
+              Parent:=self;
+              name := 'button'+inttostr(k+1);
+              onclick := GameForm.ButtonClick;
+            end;
+       end;
+end;
+end.
+
+
+
+
+
