@@ -1,0 +1,83 @@
+unit Unit4;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,strutils, system.UITypes;
+
+type
+  TScorePage = class(TForm)
+    lbl_scorepage: TLabel;
+    lbl_arrow: TLabel;
+    lbl_ratio: TLabel;
+    btn_playagain: TButton;
+    computerlabel: TLabel;
+    playerlabel: TLabel;
+    lbl_comp: TLabel;
+    lbl_play: TLabel;
+    procedure FormCreate(Sender: TObject);
+    procedure btn_playagainClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  ScorePage: TScorePage;
+
+implementation
+
+{$R *.dfm}
+Uses unit1,unit2,unit3,unit5,unit6;
+
+procedure TScorePage.btn_playagainClick(Sender: TObject);
+var x,y:integer;
+begin
+//setting up blank board spaces
+page:=false;
+turns:=0;
+compturns:=0;
+ for x := 0 to 5 do
+    for y := 0 to 6 do
+      with board[x,y] do
+       begin
+       caption:='-';
+       font.Color:=clblack;
+       end;
+gameform.Show;
+totalgames:=totalgames+1;
+end;
+
+procedure TScorePage.FormCreate(Sender: TObject);
+begin
+//changing score on labels
+lbl_play.caption:=inttostr(playerwin);
+lbl_comp.caption:=inttostr(compwin);
+end;
+end.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
