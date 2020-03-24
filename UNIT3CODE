@@ -1,0 +1,44 @@
+unit Unit3;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, strutils, system.UITypes;
+
+type
+  TLoseForm = class(TForm)
+    lbl_bad: TLabel;
+    lbl_lost: TLabel;
+    btn_scorepage: TButton;
+    label_compwin: TLabel;
+    procedure btn_scorepageClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  LoseForm: TLoseForm;
+
+implementation
+
+{$R *.dfm}
+Uses unit2,unit1,unit4,unit5,unit6;
+
+procedure TLoseForm.btn_scorepageClick(Sender: TObject);
+begin
+//incrementing computer score
+scorepage.lbl_comp.caption:=inttostr((strtoint(scorepage.lbl_comp.caption))+1);
+scorepage.show;
+end;
+
+procedure TLoseForm.FormCreate(Sender: TObject);
+begin
+gameform.Close;
+
+end;
+
+end.
