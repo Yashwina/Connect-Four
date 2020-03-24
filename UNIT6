@@ -1,0 +1,47 @@
+unit Unit6;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,strutils, system.UITypes;
+
+type
+  TDrawForm = class(TForm)
+    lbl_draw: TLabel;
+    btn_scorepage: TButton;
+    procedure btn_scorepageClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  DrawForm: TDrawForm;
+
+implementation
+
+{$R *.dfm}
+Uses unit2,unit3,unit4,unit5,unit1;
+
+procedure TDrawForm.btn_scorepageClick(Sender: TObject);
+begin
+scorepage.show;
+end;
+
+end.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
